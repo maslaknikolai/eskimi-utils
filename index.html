@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://unpkg.com/vue@next"></script>
+    <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js"></script>
+</head>
+<body>
+    <div id="constructor" style="display: flex; align-items: flex-start;">
+        <textarea @change="onChangeNames($event.target.value)" placeholder="App Names" style="height: 500px; width: 300px;"></textarea>
+        <textarea v-model="idsString" placeholder="App IDs" style="height: 500px; width: 300px;"></textarea>
+        <textarea :value="parsedLinks" readonly placeholder="Links" style="height: 500px; width: 300px;"></textarea>
+        <textarea :value="parsedDevices" readonly placeholder="Devices" style="height: 500px; width: 300px;"></textarea>
+    </div>
+
+    <script>
+        const isAppleAppId = (id) => !!Number(id)
+
+        const App = {
+            setup() {
+                const idsString = Vue.ref('')
+
+                function onChangeNames(namesString) {
+                    const names = namesString.split('\n')
+                    idsString.value = names
+                        .map(name => {
+                            let matches = Array.from(name.matchAll(/\((.+?)\)/g))
+
+                            if (!matches.length) {
+                                if (name.includes('Motorbike')) return 'com.bakno.motorbike'
+                                return name
+                            }
+
+                            return matches[matches.length - 1][1]
+                        })
+                        .join('\n')
+                }
+
+                const parsedLinks = Vue.computed(() => {
+                    return idsString.value
+                        .split('\n')
+                        .map(id => {
+                            if (id.length === 0) {
+                                return ''
+                            }
+
+                            return isAppleAppId(id)
+                                ? `https://apps.apple.com/us/app/apple/id${id}`
+                                : `https://play.google.com/store/apps/details?id=${id}&hl=en_US&gl=US`
+                        })
+                        .join('\n')
+                })
+
+                const parsedDevices = Vue.computed(() => {
+                    return idsString.value
+                        .split('\n')
+                        .map(id => {
+                            if (id.length === 0) {
+                                return ''
+                            }
+
+                            return isAppleAppId(id)
+                                ? `Apple`
+                                : `Android`
+                        })
+                        .join('\n')
+                })
+
+                return {
+                    idsString,
+                    onChangeNames,
+                    parsedLinks,
+                    parsedDevices,
+                }
+            },
+        }
+
+        Vue.createApp(App).mount('#constructor')
+    </script>
+</body>
+</html>
