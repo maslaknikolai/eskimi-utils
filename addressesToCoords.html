@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eskimi utils - Addresses to coords</title>
+    <script src="https://unpkg.com/vue@next"></script>
+    <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js"></script>
+</head>
+<body>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #1C1C1C;
+            font-family: monospace;
+        }
+
+        .container {
+            margin: 0 auto;
+            max-width: 1000px;
+            padding-top: 40px;
+        }
+
+        .textarea {
+            border-radius: 10px;
+            width: 100%;
+            resize: vertical;
+            box-shadow: 0 10px 4px rgba(0,0,0,.5);
+            display: block;
+            margin-bottom: 10px;
+            padding: 15px;
+        }
+
+        .mainBtn {
+            border-radius: 10px;
+            background: #7231CE;
+            background: linear-gradient(0deg, #7231CE 0%, #9356ea 100%);
+            box-shadow: 0 10px 4px rgba(0,0,0,.5);
+            border: 0;
+            padding: 15px 20px;
+            width: 100%;
+            color: white;
+            text-transform: uppercase;
+            font-family: monospace;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .flag {
+            width: 20px;
+            height: 13px;
+            position: relative;
+            margin-bottom: 10px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .blue {
+            background: #015BBB;
+            height: 50%;
+        }
+
+        .yellow {
+            background: #FED500;
+            height: 50%;
+        }
+
+        .table {
+            margin-top: 20px;
+            border-collapse: collapse;
+            color: white;
+            width: 100%;
+        }
+
+        .table td {
+            border: 1px solid rgba(255, 255, 255, .1);
+            padding: 4px;
+        }
+
+        .table td:last-child {
+            width: 30%;
+        }
+
+        .progressRow {
+            display: flex;
+            margin-top: 20px;
+        }
+
+        .progress {
+            color: #fff;
+            margin-right: 20px;
+        }
+
+        .btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .btn svg {
+            width: 20px;
+        }
+    </style>
+
+    <div id="constructor" class="container">
+        <div class="flag">
+            <div class="blue"></div>
+            <div class="yellow"></div>
+        </div>
+
+        <textarea
+            v-model="addressesString"
+            class="textarea"
+            placeholder="Addresses devided by line breaks"
+            style="height: 300px;"
+        ></textarea>
+
+        <button
+            @click="parseAddressesString()"
+            class="mainBtn"
+        >
+            Get coords
+        </button>
+
+        <div v-if="addresses.length" class="progressRow">
+            <div class="progress">
+                Total: {{addresses.length}}
+                <br>
+                Progress: {{processedCount}}/{{addresses.length}}
+                <br>
+                Errors: {{erroredAddresses.length}}
+            </div>
+
+            <div>
+                <button class="btn" @click="copyCoords">
+                    <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 115.77 122.88" style="enable-background:new 0 0 115.77 122.88" xml:space="preserve"><style type="text/css">.st0{fill-rule:evenodd;clip-rule:evenodd;}</style><g><path class="st0" d="M89.62,13.96v7.73h12.19h0.01v0.02c3.85,0.01,7.34,1.57,9.86,4.1c2.5,2.51,4.06,5.98,4.07,9.82h0.02v0.02 v73.27v0.01h-0.02c-0.01,3.84-1.57,7.33-4.1,9.86c-2.51,2.5-5.98,4.06-9.82,4.07v0.02h-0.02h-61.7H40.1v-0.02 c-3.84-0.01-7.34-1.57-9.86-4.1c-2.5-2.51-4.06-5.98-4.07-9.82h-0.02v-0.02V92.51H13.96h-0.01v-0.02c-3.84-0.01-7.34-1.57-9.86-4.1 c-2.5-2.51-4.06-5.98-4.07-9.82H0v-0.02V13.96v-0.01h0.02c0.01-3.85,1.58-7.34,4.1-9.86c2.51-2.5,5.98-4.06,9.82-4.07V0h0.02h61.7 h0.01v0.02c3.85,0.01,7.34,1.57,9.86,4.1c2.5,2.51,4.06,5.98,4.07,9.82h0.02V13.96L89.62,13.96z M79.04,21.69v-7.73v-0.02h0.02 c0-0.91-0.39-1.75-1.01-2.37c-0.61-0.61-1.46-1-2.37-1v0.02h-0.01h-61.7h-0.02v-0.02c-0.91,0-1.75,0.39-2.37,1.01 c-0.61,0.61-1,1.46-1,2.37h0.02v0.01v64.59v0.02h-0.02c0,0.91,0.39,1.75,1.01,2.37c0.61,0.61,1.46,1,2.37,1v-0.02h0.01h12.19V35.65 v-0.01h0.02c0.01-3.85,1.58-7.34,4.1-9.86c2.51-2.5,5.98-4.06,9.82-4.07v-0.02h0.02H79.04L79.04,21.69z M105.18,108.92V35.65v-0.02 h0.02c0-0.91-0.39-1.75-1.01-2.37c-0.61-0.61-1.46-1-2.37-1v0.02h-0.01h-61.7h-0.02v-0.02c-0.91,0-1.75,0.39-2.37,1.01 c-0.61,0.61-1,1.46-1,2.37h0.02v0.01v73.27v0.02h-0.02c0,0.91,0.39,1.75,1.01,2.37c0.61,0.61,1.46,1,2.37,1v-0.02h0.01h61.7h0.02 v0.02c0.91,0,1.75-0.39,2.37-1.01c0.61-0.61,1-1.46,1-2.37h-0.02V108.92L105.18,108.92z"></path></g></svg>
+                </button>
+            </div>
+        </div>
+
+        <table class="table">
+            <tr
+                v-for="(address, i) in addresses"
+                :key="i"
+            >
+                <td>
+                    {{address.addressString}}
+                </td>
+
+                <td>
+                    <div v-if="address.status === 'queue'">
+                        In queue...
+                    </div>
+
+                    <div v-if="address.status === 'loading'">
+                        Searching...
+                    </div>
+
+                    <div v-if="address.status === 'error'">
+                        Error
+                    </div>
+
+                    <div v-if="address.status === 'done'">
+                        {{address.coords}}
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <script>
+        const yandexApiKey = '5246fcae-cabb-4cb6-809a-dcf5d82838cf'
+
+        function getCoordinates(address) {
+            return fetch('https://geocode-maps.yandex.ru/1.x' + '?' + new URLSearchParams({
+                geocode: address,
+                apikey: yandexApiKey,
+                format: 'json',
+                lang: 'ru_RU',
+            }))
+                .then(r => r.json())
+                .then(r => r.response.GeoObjectCollection.featureMember[0]?.GeoObject.Point.pos)
+        }
+
+        const App = {
+            setup() {
+                const addressesInner = Vue.ref(localStorage.addressString)
+                const addressesString = Vue.computed({
+                    get: () => addressesInner.value,
+                    set: (v) => {
+                        localStorage.addressString = v
+                        addressesInner.value = v
+                    },
+                })
+                const addresses = Vue.ref([])
+                const erroredAddresses = Vue.computed(() => addresses.value.filter(it => it.status === 'error'))
+
+                const processedCount = Vue.ref(0)
+
+                function parseAddressesString() {
+                    addresses.value = addressesString.value
+                        .split('\n')
+                        .filter(Boolean)
+                        .map(addressString => ({
+                            addressString,
+                            status: 'queue',
+                            coords: ''
+                        }))
+
+                    processAddresses()
+                }
+
+                async function processAddresses() {
+                    processedCount.value = 0
+
+                    for (address of addresses.value) {
+                        address.status = 'loading'
+
+                        try {
+                            const coords = await getCoordinates(address.addressString)
+
+                            if (!coords) {
+                                address.status = 'error'
+                                continue;
+                            }
+
+                            address.coords = coords
+                            address.status = 'done'
+                        } catch {
+                            address.status = 'loading'
+                        }
+
+                        processedCount.value += 1
+                    }
+                }
+
+                function copyCoords() {
+                    navigator.clipboard.writeText(
+                        addresses.value
+                            .map(it => it.coords)
+                            .join('\n')
+                    )
+                }
+
+                return {
+                    copyCoords,
+                    addressesString,
+                    addresses,
+                    parseAddressesString,
+                    processedCount,
+                    erroredAddresses
+                }
+            },
+        }
+
+        Vue.createApp(App).mount('#constructor')
+    </script>
+</body>
+</html>
