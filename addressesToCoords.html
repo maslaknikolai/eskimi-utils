@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Eskimi utils - Addresses to coords</title>
     <script src="https://unpkg.com/vue@next"></script>
-    <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js"></script>
 </head>
 <body>
     <style>
@@ -108,6 +107,30 @@
         .btn svg {
             width: 20px;
         }
+
+        .link {
+            color: #fff;
+            text-decoration: underline;
+        }
+
+        .removeCoords {
+            margin-left: 5px;
+            display: inline-flex;
+            align-items: center;
+            background: 0;
+            border: 0;
+            color: #fff;
+            justify-content: center;
+            width: 15px;
+            height: 15px;
+            cursor: pointer;
+            border-radius: 50%;
+            transition: all .3s;
+        }
+
+        .removeCoords:hover {
+            background: rgba(255, 255, 255, .4);
+        }
     </style>
 
     <div id="constructor" class="container">
@@ -152,7 +175,13 @@
                 :key="i"
             >
                 <td>
-                    {{address.addressString}}
+                    <a
+                        class="link"
+                        :href="getGoogleSearchLink(address.addressString)"
+                        target="_blank"
+                    >
+                        {{address.addressString}}
+                    </a>
                 </td>
 
                 <td>
@@ -169,7 +198,25 @@
                     </div>
 
                     <div v-if="address.status === 'done'">
-                        {{address.coords}}
+                            <div
+                                v-for="(coordsItem, coordsIndex) in address.coords"
+                                key="coordsItem"
+                            >
+                                <a
+                                    class="link"
+                                    :href="getGoogleSearchLink(coordsItem)"
+                                    target="_blank"
+                                >
+                                    {{coordsItem}}
+                                </a>
+
+                                <button
+                                    class="removeCoords"
+                                    @click="address.coords.splice(coordsIndex, 1)"
+                                >
+                                    &times;
+                                </button>
+                            </div>
                     </div>
                 </td>
             </tr>
@@ -177,17 +224,11 @@
     </div>
 
     <script>
-        const yandexApiKey = '5246fcae-cabb-4cb6-809a-dcf5d82838cf'
-
         function getCoordinates(address) {
-            return fetch('https://geocode-maps.yandex.ru/1.x' + '?' + new URLSearchParams({
-                geocode: address,
-                apikey: yandexApiKey,
-                format: 'json',
-                lang: 'ru_RU',
-            }))
+            // return fetch(`http://localhost:3000/search/${encodeURIComponent(address)}`)
+            return fetch(`https://eskimi-utils.herokuapp.com/search/${encodeURIComponent(address)}`)
                 .then(r => r.json())
-                .then(r => r.response.GeoObjectCollection.featureMember[0]?.GeoObject.Point.pos)
+                .then(r => r.coords)
         }
 
         const App = {
@@ -212,7 +253,7 @@
                         .map(addressString => ({
                             addressString,
                             status: 'queue',
-                            coords: ''
+                            coords: []
                         }))
 
                     processAddresses()
@@ -227,15 +268,14 @@
                         try {
                             const coords = await getCoordinates(address.addressString)
 
-                            if (!coords) {
+                            if (coords.length) {
+                                address.coords = coords
+                                address.status = 'done'
+                            } else {
                                 address.status = 'error'
-                                continue;
                             }
-
-                            address.coords = coords
-                            address.status = 'done'
                         } catch {
-                            address.status = 'loading'
+                            address.status = 'error'
                         }
 
                         processedCount.value += 1
@@ -245,12 +285,17 @@
                 function copyCoords() {
                     navigator.clipboard.writeText(
                         addresses.value
-                            .map(it => it.coords)
+                            .map(it => `${it.addressString}	${it.coords.join('	')}`)
                             .join('\n')
                     )
                 }
 
+                function getGoogleSearchLink(text) {
+                    return `https://www.google.com.tr/maps/search/${encodeURIComponent(text)}`
+                }
+
                 return {
+                    getGoogleSearchLink,
                     copyCoords,
                     addressesString,
                     addresses,
