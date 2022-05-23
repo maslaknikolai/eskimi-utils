@@ -24,8 +24,19 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
     waitUntil: 'networkidle2'
   });
 
+  let requestCounter = 0
   async function processRequest([req, res]) {
     const query = req.params.query
+
+    requestCounter++
+    if (requestCounter === 10) {
+      await page.goto(`https://developers-dot-devsite-v2-prod.appspot.com/maps/documentation/utils/geocoder/embed`, {
+        waitUntil: 'networkidle2'
+      });
+
+      requestCounter = 0
+    }
+
     await page.$eval('#query-input', (el, query) => {
       el.value = query
     }, query);
