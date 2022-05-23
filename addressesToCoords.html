@@ -251,7 +251,7 @@
                         .split('\n')
                         .filter(Boolean)
                         .map(addressString => ({
-                            addressString,
+                            addressString: addressString.trim(),
                             status: 'queue',
                             coords: []
                         }))
