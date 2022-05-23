@@ -285,7 +285,7 @@
                 function copyCoords() {
                     navigator.clipboard.writeText(
                         addresses.value
-                            .map(it => `${it.addressString}	${it.coords.join('	')}`)
+                            .map(it => `${it.addressString}${it.coords.length ? `	${it.coords.join('	')}` : ''}`)
                             .join('\n')
                     )
                 }
