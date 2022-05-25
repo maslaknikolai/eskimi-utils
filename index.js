@@ -49,7 +49,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
       const statusEl = document.querySelector('#status-line')
       const status = statusEl.innerText
 
-      status.innerHTML = '';
+      statusEl.innerHTML = '';
 
       return {
         coords,
